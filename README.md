@@ -103,7 +103,7 @@ Unlike typical tools, AttentionX explains:
 ### 1. Clone the repo
 
 ```bash
-git clone <your-repo-link>
+git clone https://github.com/sham909-ship-it/AttentionX-Peak2Reel-AI
 cd AttentionX
 ```
 
