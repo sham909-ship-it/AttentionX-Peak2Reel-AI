@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttentionX – AI Content Repurposing Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #18181f;
+    --bg4: #1e1e28;
+    --card: #16161e;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --gold: #f5c842;
+    --gold2: #e8a820;
+    --gold-dim: rgba(245,200,66,0.12);
+    --gold-glow: rgba(245,200,66,0.25);
+    --red: #ff5e5e;
+    --red-dim: rgba(255,94,94,0.12);
+    --green: #4ade80;
+    --green-dim: rgba(74,222,128,0.12);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.12);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --orange: #fb923c;
+    --orange-dim: rgba(251,146,60,0.12);
+    --text: #f0f0f5;
+    --text2: #9b9bac;
+    --text3: #5a5a6e;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --r: 12px;
+    --r2: 20px;
+    --r3: 8px;
+    --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    font-size: 14px;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.3;
+  }
+
+  .app { display: flex; height: 100vh; overflow: hidden; position: relative; z-index: 1; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+  }
+  .logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo-text span { color: var(--gold); }
+  .logo-sub { font-size: 10px; color: var(--text3); margin-top: 2px; letter-spacing: 1px; text-transform: uppercase; }
+
+  .nav { padding: 16px 12px; flex: 1; }
+  .nav-section { margin-bottom: 24px; }
+  .nav-label { font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: var(--r3);
+    cursor: pointer; transition: var(--transition);
+    font-size: 13px; color: var(--text2);
+    border: 1px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active {
+    background: var(--gold-dim);
+    color: var(--gold);
+    border-color: rgba(245,200,66,0.2);
+  }
+  .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-left: auto; font-size: 10px; font-weight: 600;
+    background: var(--gold-dim); color: var(--gold);
+    padding: 2px 7px; border-radius: 20px;
+  }
+
+  .sidebar-bottom {
+    padding: 16px; border-top: 1px solid var(--border);
+  }
+  .plan-card {
+    background: linear-gradient(135deg, rgba(245,200,66,0.08), rgba(245,200,66,0.04));
+    border: 1px solid rgba(245,200,66,0.15);
+    border-radius: var(--r);
+    padding: 14px;
+  }
+  .plan-title { font-size: 12px; font-weight: 600; color: var(--gold); margin-bottom: 4px; }
+  .plan-desc { font-size: 11px; color: var(--text3); line-height: 1.5; }
+  .plan-btn {
+    display: inline-block; margin-top: 10px;
+    background: var(--gold); color: #000; border: none;
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    font-family: var(--font-body);
+    transition: var(--transition);
+  }
+  .plan-btn:hover { background: #fff; }
+
+  /* MAIN CONTENT */
+  .main {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+  }
+
+  /* PAGE SECTIONS */
+  .page { display: none; }
+  .page.active { display: flex; flex-direction: column; flex: 1; }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; flex: 1; }
+  .topbar-sub { font-size: 12px; color: var(--text3); display: block; font-family: var(--font-body); font-weight: 400; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--r3);
+    font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: var(--transition); border: none;
+    user-select: none;
+  }
+  .btn-primary {
+    background: var(--gold); color: #000;
+  }
+  .btn-primary:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(245,200,66,0.3); }
+  .btn-ghost {
+    background: transparent; color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+  .btn-danger {
+    background: var(--red-dim); color: var(--red);
+    border: 1px solid rgba(255,94,94,0.2);
+  }
+  .btn-success {
+    background: var(--green-dim); color: var(--green);
+    border: 1px solid rgba(74,222,128,0.2);
+  }
+
+  /* UPLOAD AREA */
+  .content-area { padding: 28px; flex: 1; }
+
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--r2);
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-zone::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(245,200,66,0.04) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .upload-zone:hover { border-color: var(--gold2); }
+  .upload-zone:hover::before { opacity: 1; }
+  .upload-zone.dragover { border-color: var(--gold); background: var(--gold-dim); }
+
+  .upload-icon { font-size: 48px; margin-bottom: 16px; }
+  .upload-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .upload-sub { color: var(--text2); margin-bottom: 24px; font-size: 14px; }
+  .upload-formats {
+    display: inline-flex; gap: 8px;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .format-tag {
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; color: var(--text2);
+    font-family: var(--font-body);
+  }
+
+  /* CONFIG PANEL */
+  .config-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin: 20px 0;
+  }
+  .config-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 18px;
+  }
+  .config-card h4 {
+    font-family: var(--font-display); font-size: 13px; font-weight: 700;
+    margin-bottom: 12px; color: var(--text);
+  }
+  .config-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .config-label { font-size: 12px; color: var(--text2); }
+  .select-input {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 10px; border-radius: 6px;
+    font-size: 12px; font-family: var(--font-body);
+    cursor: pointer; outline: none;
+    appearance: none;
+    padding-right: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235a5a6e' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+  }
+
+  .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .toggle-pill {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); padding: 5px 12px; border-radius: 20px;
+    font-size: 11px; cursor: pointer; transition: var(--transition);
+    user-select: none;
+  }
+  .toggle-pill.active {
+    background: var(--gold-dim); border-color: rgba(245,200,66,0.3);
+    color: var(--gold); font-weight: 600;
+  }
+  .toggle-pill:hover { border-color: var(--border2); color: var(--text); }
+
+  /* AUDIENCE SELECTOR */
+  .audience-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .audience-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--r3); padding: 10px 12px;
+    cursor: pointer; transition: var(--transition); user-select: none;
+  }
+  .audience-card.selected {
+    background: var(--purple-dim); border-color: rgba(167,139,250,0.3);
+  }
+  .audience-card.selected .aud-icon { filter: none; }
+  .aud-icon { font-size: 18px; margin-bottom: 4px; }
+  .aud-name { font-size: 11px; font-weight: 600; color: var(--text); }
+  .aud-desc { font-size: 10px; color: var(--text3); }
+
+  /* PROGRESS / PROCESSING STATE */
+  .processing-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(10,10,15,0.95);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 24px;
+    display: none;
+  }
+  .processing-overlay.show { display: flex; }
+  .processing-logo { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: var(--gold); }
+  .processing-msg { font-size: 18px; color: var(--text); font-family: var(--font-display); font-weight: 600; }
+  .processing-funny { font-size: 13px; color: var(--text3); }
+  .progress-bar-wrap {
+    width: 400px; max-width: 90vw;
+    height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--gold2), var(--gold));
+    transition: width 0.4s ease;
+  }
+  .processing-steps {
+    display: flex; flex-direction: column; gap: 8px; width: 400px; max-width: 90vw;
+  }
+  .proc-step {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text3);
+    transition: color 0.3s;
+  }
+  .proc-step.done { color: var(--green); }
+  .proc-step.active { color: var(--text); }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--bg3); flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .proc-step.done .step-dot { background: var(--green); }
+  .proc-step.active .step-dot { background: var(--gold); box-shadow: 0 0 8px var(--gold); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* RESULTS PAGE */
+  .results-layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; height: calc(100vh - 120px); }
+  .results-main { overflow-y: auto; padding-right: 4px; }
+  .results-sidebar { border-left: 1px solid var(--border); padding-left: 20px; overflow-y: auto; }
+
+  /* TIMELINE */
+  .timeline-section {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r2); padding: 20px; margin-bottom: 16px;
+  }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: var(--font-display); font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-badge {
+    font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600;
+  }
+  .badge-gold { background: var(--gold-dim); color: var(--gold); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-red { background: var(--red-dim); color: var(--red); }
+
+  /* WAVEFORM TIMELINE */
+  .waveform-container {
+    position: relative; height: 100px;
+    background: var(--bg2); border-radius: var(--r); overflow: hidden;
+    cursor: crosshair;
+  }
+  .waveform-canvas { width: 100%; height: 100%; }
+  .waveform-peaks { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; padding-bottom: 4px; gap: 2px; padding: 0 4px; }
+  .waveform-bar {
+    flex: 1; background: var(--border2); border-radius: 2px 2px 0 0;
+    transition: background 0.2s; cursor: pointer;
+    min-width: 4px;
+  }
+  .waveform-bar.peak { background: var(--gold); }
+  .waveform-bar.peak:hover { background: var(--gold2); box-shadow: 0 0 8px var(--gold-glow); }
+  .waveform-bar.selected { background: var(--purple); }
+  .waveform-bar:hover:not(.peak) { background: var(--text3); }
+  .timeline-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text3); }
+
+  /* CLIPS GRID */
+  .clips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .clip-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--r); overflow: hidden;
+    transition: var(--transition); cursor: pointer; position: relative;
+  }
+  .clip-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .clip-card.selected { border-color: rgba(245,200,66,0.4); }
+  .clip-thumb {
+    aspect-ratio: 9/16; background: var(--bg3);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .clip-preview-content { text-align: center; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 12px 8px; }
+  .clip-hook-text {
+    font-family: var(--font-display); font-size: 13px; font-weight: 800;
+    line-height: 1.2; text-align: center; color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    padding: 0 4px;
+  }
+  .clip-speaker {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--bg3), var(--bg4));
+    border: 2px solid var(--border2);
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .clip-caption-bar {
+    background: rgba(0,0,0,0.85); color: #fff;
+    font-size: 10px; padding: 5px 8px; text-align: center;
+    width: 100%; border-top: 2px solid var(--gold);
+    font-weight: 600;
+  }
+  .clip-score {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(0,0,0,0.8); border-radius: 20px;
+    padding: 4px 8px; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .clip-score-val { color: var(--gold); }
+  .clip-duration {
+    position: absolute; bottom: 40px; left: 8px;
+    background: rgba(0,0,0,0.7); padding: 2px 6px;
+    border-radius: 4px; font-size: 10px; color: var(--text2);
+  }
+  .clip-info { padding: 10px; }
+  .clip-title { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+  .clip-meta { font-size: 10px; color: var(--text3); display: flex; gap: 8px; flex-wrap: wrap; }
+  .clip-actions {
+    display: flex; gap: 6px; padding: 0 10px 10px;
+  }
+  .clip-action-btn {
+    flex: 1; padding: 5px; border-radius: 6px; border: none; cursor: pointer;
+    font-family: var(--font-body); font-size: 10px; font-weight: 600;
+    transition: var(--transition);
+  }
+  .clip-action-btn.primary { background: var(--gold-dim); color: var(--gold); }
+  .clip-action-btn.primary:hover { background: var(--gold); color: #000; }
+  .clip-action-btn.secondary { background: var(--bg3); color: var(--text2); }
+  .clip-action-btn.secondary:hover { background: var(--border); color: var(--text); }
+
+  /* GOLDEN NUGGET SCORE PANEL */
+  .score-panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r2); padding: 20px; margin-bottom: 16px;
+  }
+  .score-big {
+    display: flex; align-items: baseline; gap: 8px; margin: 12px 0;
+  }
+  .score-number {
+    font-family: var(--font-display); font-size: 56px; font-weight: 800;
+    color: var(--gold); line-height: 1;
+  }
+  .score-max { font-size: 18px; color: var(--text3); }
+  .score-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .score-bar-track {
+    height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; margin: 8px 0;
+  }
+  .score-bar-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--gold2), var(--gold));
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+  .score-reasons {
+    display: flex; flex-direction: column; gap: 6px; margin-top: 12px;
+  }
+  .score-reason {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg2); border-radius: var(--r3); padding: 8px 12px;
+    font-size: 11px;
+  }
+  .reason-icon { font-size: 14px; flex-shrink: 0; }
+  .reason-text { color: var(--text2); flex: 1; }
+  .reason-value { font-weight: 700; color: var(--text); }
+
+  /* PLATFORM CAPTIONS */
+  .platform-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .platform-tab {
+    padding: 6px 14px; border-radius: var(--r3); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: var(--transition); user-select: none;
+    border: 1px solid var(--border); color: var(--text2); background: transparent;
+  }
+  .platform-tab.active { background: var(--blue-dim); color: var(--blue); border-color: rgba(96,165,250,0.3); }
+
+  .caption-preview {
+    background: var(--bg2); border-radius: var(--r); padding: 14px;
+    font-size: 12px; line-height: 1.7; color: var(--text);
+    border: 1px solid var(--border); margin-bottom: 8px;
+  }
+  .caption-hook {
+    font-family: var(--font-display); font-size: 15px; font-weight: 800;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .hashtags { color: var(--blue); font-size: 11px; }
+
+  /* MOBILE PREVIEW */
+  .phone-frame {
+    width: 180px; margin: 0 auto;
+    background: #000; border-radius: 32px;
+    border: 6px solid #222;
+    overflow: hidden; position: relative;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    aspect-ratio: 9/19.5;
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 80px; height: 20px; background: #000; border-radius: 0 0 12px 12px; z-index: 10;
+  }
+  .phone-screen {
+    width: 100%; height: 100%; background: var(--bg2);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .phone-video-area {
+    flex: 1; background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 24px 8px 8px; position: relative;
+  }
+  .phone-hook {
+    font-family: var(--font-display); font-size: 11px; font-weight: 800;
+    text-align: center; line-height: 1.2; color: #fff;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  }
+  .phone-speaker-area {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .phone-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--bg3); border: 2px solid var(--gold); display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .phone-caption {
+    background: rgba(0,0,0,0.85); color: #fff; width: 100%;
+    padding: 5px 8px; text-align: center; font-size: 8px; font-weight: 700;
+    border-top: 2px solid var(--gold);
+  }
+  .phone-ui-bar {
+    display: flex; justify-content: space-around; align-items: center;
+    height: 40px; padding: 0 8px; background: rgba(0,0,0,0.5);
+  }
+  .phone-btn { font-size: 12px; }
+
+  /* HIGHLIGHT REEL */
+  .reel-card {
+    background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(245,200,66,0.05));
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: var(--r2); padding: 20px; margin-bottom: 16px;
+  }
+  .reel-preview {
+    aspect-ratio: 9/5; background: var(--bg2); border-radius: var(--r);
+    display: flex; align-items: center; justify-content: center;
+    margin: 12px 0; font-size: 32px; position: relative; overflow: hidden;
+  }
+  .reel-clips-strip {
+    display: flex; gap: 4px; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  }
+  .reel-clip-thumb {
+    width: 36px; height: 36px; border-radius: 4px; border: 2px solid transparent;
+    background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 12px;
+    transition: var(--transition);
+  }
+  .reel-clip-thumb.active { border-color: var(--gold); }
+
+  /* EXPORT PANEL */
+  .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .export-item {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--r3); padding: 12px;
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; transition: var(--transition);
+  }
+  .export-item:hover { border-color: var(--border2); background: var(--bg3); }
+  .export-icon { font-size: 20px; }
+  .export-name { font-size: 11px; font-weight: 600; color: var(--text); }
+  .export-desc { font-size: 10px; color: var(--text3); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+  /* TOOLTIPS */
+  .tooltip {
+    position: relative;
+  }
+  .tooltip::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: var(--bg4); color: var(--text); font-size: 11px;
+    padding: 4px 10px; border-radius: 6px; white-space: nowrap;
+    pointer-events: none; opacity: 0; transition: opacity 0.2s;
+    border: 1px solid var(--border);
+    z-index: 50;
+  }
+  .tooltip:hover::after { opacity: 1; }
+
+  /* DARK MODE TOGGLE */
+  .mode-toggle { font-size: 16px; cursor: pointer; padding: 6px; border-radius: 6px; transition: var(--transition); }
+  .mode-toggle:hover { background: var(--bg3); }
+
+  /* HOOK-FIRST MODE */
+  .hook-toggle-wrap {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--r3); padding: 8px 14px;
+  }
+  .hook-toggle-label { font-size: 12px; color: var(--text2); }
+  .switch {
+    position: relative; width: 34px; height: 18px; flex-shrink: 0;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider-sw {
+    position: absolute; inset: 0; background: var(--bg3);
+    border-radius: 9px; cursor: pointer; transition: .3s;
+    border: 1px solid var(--border);
+  }
+  .slider-sw::before {
+    content: ''; position: absolute;
+    width: 12px; height: 12px; border-radius: 50%;
+    left: 2px; top: 2px; background: var(--text3);
+    transition: .3s;
+  }
+  input:checked + .slider-sw { background: var(--gold-dim); border-color: rgba(245,200,66,0.3); }
+  input:checked + .slider-sw::before { transform: translateX(16px); background: var(--gold); }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:none; } }
+  .fade-in { animation: fadeIn 0.4s ease forwards; }
+  .fade-in-d1 { animation: fadeIn 0.4s ease 0.1s forwards; opacity: 0; }
+  .fade-in-d2 { animation: fadeIn 0.4s ease 0.2s forwards; opacity: 0; }
+  .fade-in-d3 { animation: fadeIn 0.4s ease 0.3s forwards; opacity: 0; }
+
+  /* CLIP DETAIL MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    display: none;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-content {
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: var(--r2); padding: 28px;
+    max-width: 680px; width: 95vw; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .modal-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+  .modal-close { background: var(--bg3); border: none; color: var(--text2); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: var(--font-body); transition: var(--transition); }
+  .modal-close:hover { color: var(--text); background: var(--bg4); }
+
+  .regen-area {
+    background: var(--bg2); border-radius: var(--r); padding: 12px;
+    display: flex; gap: 8px; margin-top: 10px;
+  }
+  .regen-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text); font-size: 12px; font-family: var(--font-body);
+  }
+  .regen-input::placeholder { color: var(--text3); }
+
+  /* TOAST */
+  .toast-container {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: var(--r); padding: 12px 16px;
+    font-size: 13px; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+    animation: slideIn 0.3s ease;
+    max-width: 300px;
+  }
+  .toast.success { border-color: rgba(74,222,128,0.3); }
+  .toast.gold { border-color: rgba(245,200,66,0.3); }
+
+  /* CAPTION MODE BADGES */
+  .caption-mode-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    margin-right: 6px; margin-bottom: 6px;
+  }
+  .cm-emotion { background: var(--red-dim); color: var(--red); }
+  .cm-insight { background: var(--green-dim); color: var(--green); }
+  .cm-hook { background: var(--gold-dim); color: var(--gold); }
+
+  /* HISTORY PAGE */
+  .history-list { display: flex; flex-direction: column; gap: 12px; }
+  .history-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 16px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: var(--transition);
+  }
+  .history-item:hover { border-color: var(--border2); }
+  .history-thumb { width: 56px; height: 56px; border-radius: 8px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .history-info { flex: 1; }
+  .history-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .history-meta { font-size: 11px; color: var(--text3); display: flex; gap: 12px; }
+  .history-actions { display: flex; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <div class="logo-icon">⚡</div>
+        <div>
+          <div class="logo-text">Attention<span>X</span>Peak2Reel AI</div>
+        </div>
+      </div>
+      <div class="logo-sub">AI Content Engine</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">
+        <div class="nav-label">Workspace</div>
+        <div class="nav-item active" onclick="showPage('upload')">
+          <span class="nav-icon">🎬</span> New Video
+        </div>
+        <div class="nav-item" onclick="showPage('results')">
+          <span class="nav-icon">✨</span> Results
+          <span class="nav-badge" id="nav-clips-count" style="display:none">0</span>
+        </div>
+        <div class="nav-item" onclick="showPage('history')">
+          <span class="nav-icon">📂</span> History
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Tools</div>
+        <div class="nav-item" onclick="showPage('reel')">
+          <span class="nav-icon">🎞️</span> Highlight Reel
+        </div>
+        <div class="nav-item" onclick="showPage('export')">
+          <span class="nav-icon">📦</span> Export Pack
+        </div>
+        <div class="nav-item" onclick="showPage('preview')">
+          <span class="nav-icon">📱</span> Mobile Preview
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Settings</div>
+        <div class="nav-item" onclick="showToast('⚙️ Settings coming soon!','')">
+          <span class="nav-icon">⚙️</span> Preferences
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ============ UPLOAD PAGE ============ -->
+    <div class="page active" id="page-upload">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">New Project <span style="color:var(--text3);font-weight:400">/ Upload Video</span></div>
+          <span class="topbar-sub">Upload your long-form video to extract golden nugget clips</span>
+        </div>
+        <div class="topbar-actions">
+          <div class="hook-toggle-wrap tooltip" data-tip="Start each clip with the catchiest 3-second hook">
+            <span style="font-size:12px">⚡</span>
+            <span class="hook-toggle-label">Hook-First Mode</span>
+            <label class="switch">
+              <input type="checkbox" id="hookFirst" checked>
+              <span class="slider-sw"></span>
+            </label>
+          </div>
+          <button class="btn btn-primary" onclick="startProcessing()">⚡ Analyze Video</button>
+        </div>
+      </div>
+      <div class="content-area">
+        <!-- UPLOAD ZONE -->
+        <div class="upload-zone" id="uploadZone" onclick="triggerUpload()" ondragover="handleDrag(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <div class="upload-icon">🎬</div>
+          <div class="upload-title">Drop your video here</div>
+          <div class="upload-sub">Or click to browse files — supports lectures, podcasts, workshops</div>
+          <div class="upload-formats">
+            <span class="format-tag">MP4</span>
+            <span class="format-tag">MOV</span>
+            <span class="format-tag">AVI</span>
+            <span class="format-tag">WebM</span>
+            <span class="format-tag">MKV</span>
+            <span class="format-tag">YouTube URL</span>
+          </div>
+          <input type="file" id="fileInput" style="display:none" accept="video/*" onchange="handleFileSelect(this)">
+        </div>
+
+        <!-- OR YouTube URL -->
+        <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+          <span style="font-size:12px;color:var(--text3)">or paste URL</span>
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:20px">
+          <input id="ytUrl" type="text" placeholder="https://youtube.com/watch?v=..." 
+            style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--r3);font-size:13px;font-family:var(--font-body);outline:none;"
+            onfocus="this.style.borderColor='var(--border2)'" onblur="this.style.borderColor='var(--border)'">
+          <button class="btn btn-ghost" onclick="loadDemo()">Load Demo</button>
+        </div>
+
+        <!-- CONFIG PANEL -->
+        <div class="config-grid fade-in-d1">
+          <div class="config-card">
+            <h4>🎯 Target Audience</h4>
+            <div class="audience-grid">
+              <div class="audience-card selected" onclick="selectAudience(this)">
+                <div class="aud-icon">🎓</div>
+                <div class="aud-name">College Student</div>
+                <div class="aud-desc">Motivational & relatable</div>
+              </div>
+              <div class="audience-card" onclick="selectAudience(this)">
+                <div class="aud-icon">💼</div>
+                <div class="aud-name">Job Seeker</div>
+                <div class="aud-desc">Career & interview tips</div>
+              </div>
+              <div class="audience-card" onclick="selectAudience(this)">
+                <div class="aud-icon">🚀</div>
+                <div class="aud-name">Startup Founder</div>
+                <div class="aud-desc">Bold & innovative</div>
+              </div>
+              <div class="audience-card" onclick="selectAudience(this)">
+                <div class="aud-icon">👔</div>
+                <div class="aud-name">Working Pro</div>
+                <div class="aud-desc">Professional insights</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h4>📱 Platform & Style</h4>
+            <div class="config-row">
+              <span class="config-label">Target Platform</span>
+              <select class="select-input" id="platformSelect">
+                <option value="instagram">Instagram Reels</option>
+                <option value="tiktok">TikTok</option>
+                <option value="youtube">YouTube Shorts</option>
+                <option value="linkedin">LinkedIn</option>
+              </select>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Caption Style</span>
+              <select class="select-input" id="captionStyle">
+                <option>Hook-first</option>
+                <option>Karaoke</option>
+                <option>Emotional</option>
+                <option>Minimal</option>
+              </select>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Clip Length</span>
+              <select class="select-input">
+                <option>15–30 sec</option>
+                <option>30–60 sec</option>
+                <option selected>60–90 sec</option>
+              </select>
+            </div>
+            <div style="margin-top:12px">
+              <div class="config-label" style="margin-bottom:8px">Detect</div>
+              <div class="toggle-group">
+                <span class="toggle-pill active" onclick="this.classList.toggle('active')">💡 Insights</span>
+                <span class="toggle-pill active" onclick="this.classList.toggle('active')">🔥 Passion Spikes</span>
+                <span class="toggle-pill active" onclick="this.classList.toggle('active')">😮 Surprise</span>
+                <span class="toggle-pill active" onclick="this.classList.toggle('active')">📖 Stories</span>
+                <span class="toggle-pill" onclick="this.classList.toggle('active')">😂 Humor</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h4>✂️ Smart Crop Settings</h4>
+            <div class="config-row">
+              <span class="config-label">Face Tracking</span>
+              <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider-sw"></span>
+              </label>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Slide/Whiteboard PiP</span>
+              <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider-sw"></span>
+              </label>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Auto-Zoom on Peak</span>
+              <label class="switch">
+                <input type="checkbox">
+                <span class="slider-sw"></span>
+              </label>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Output Format</span>
+              <select class="select-input">
+                <option>9:16 Vertical</option>
+                <option>1:1 Square</option>
+                <option>4:5 Portrait</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="config-card">
+            <h4>⚡ AI Engine</h4>
+            <div class="config-row">
+              <span class="config-label">Transcript Model</span>
+              <select class="select-input">
+                <option>OpenAI Whisper</option>
+                <option>Google STT</option>
+                <option>Deepgram</option>
+              </select>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Analysis Model</span>
+              <select class="select-input">
+                <option>Gemini 1.5 Flash</option>
+                <option>Claude Sonnet</option>
+                <option>GPT-4o</option>
+              </select>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Max Clips</span>
+              <select class="select-input">
+                <option>5 clips</option>
+                <option selected>10 clips</option>
+                <option>15 clips</option>
+              </select>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Min Nugget Score</span>
+              <select class="select-input">
+                <option>60+</option>
+                <option selected>70+</option>
+                <option>80+</option>
+                <option>90+</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:center;margin-top:8px">
+          <button class="btn btn-primary" style="padding:14px 40px;font-size:15px" onclick="startProcessing()">
+            ⚡ Find My Golden Nuggets
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ RESULTS PAGE ============ -->
+    <div class="page" id="page-results">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Results <span style="color:var(--text3);font-weight:400">/ Mentorship Session #1</span></div>
+          <span class="topbar-sub" id="results-meta">Found 8 golden nuggets from 47:32 video</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="showPage('upload')">← New Video</button>
+          <button class="btn btn-ghost" onclick="showPage('reel')">🎞️ Make Reel</button>
+          <button class="btn btn-primary" onclick="showPage('export')">📦 Export Pack</button>
+        </div>
+      </div>
+      <div class="content-area" style="padding-top:20px">
+        <div class="results-layout">
+          <div class="results-main">
+            <!-- EMOTIONAL ARC TIMELINE -->
+            <div class="timeline-section fade-in">
+              <div class="section-header">
+                <div class="section-title">📈 Emotional Arc Timeline <span class="section-badge badge-gold">8 peaks detected</span></div>
+                <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="showToast('🔥 Regenerating timeline analysis...','gold')">↺ Re-analyze</button>
+              </div>
+              <div class="waveform-container" id="waveformContainer">
+                <div class="waveform-peaks" id="waveformBars"></div>
+              </div>
+              <div class="timeline-labels">
+                <span>0:00</span><span>5:00</span><span>10:00</span><span>15:00</span>
+                <span>20:00</span><span>25:00</span><span>30:00</span><span>35:00</span>
+                <span>40:00</span><span>47:32</span>
+              </div>
+              <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text3)">
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--gold);display:inline-block"></span> Peak Moment</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--purple);display:inline-block"></span> Selected Clip</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--border2);display:inline-block"></span> Background</span>
+              </div>
+            </div>
+
+            <!-- CLIPS GRID -->
+            <div class="timeline-section fade-in-d1">
+              <div class="section-header">
+                <div class="section-title">✨ Golden Nugget Clips <span class="section-badge badge-purple">Ranked by virality</span></div>
+                <div style="display:flex;gap:8px">
+                  <select class="select-input" onchange="sortClips(this.value)">
+                    <option value="score">Sort: Score</option>
+                    <option value="time">Sort: Time</option>
+                    <option value="duration">Sort: Duration</option>
+                  </select>
+                </div>
+              </div>
+              <div class="clips-grid" id="clipsGrid"></div>
+            </div>
+          </div>
+
+          <div class="results-sidebar">
+            <!-- GOLDEN NUGGET SCORE PANEL -->
+            <div class="score-panel fade-in">
+              <div class="section-title">🏅 Golden Nugget Score</div>
+              <div class="score-big">
+                <div class="score-number" id="selectedScore">92</div>
+                <div class="score-max">/100</div>
+              </div>
+              <div class="score-bar-track">
+                <div class="score-bar-fill" id="scoreBar" style="width:92%"></div>
+              </div>
+              <div class="score-label" id="scoreLabel">🔥 Viral Potential: Exceptional</div>
+              <div class="score-reasons" id="scoreReasons">
+                <div class="score-reason">
+                  <span class="reason-icon">🎤</span>
+                  <span class="reason-text">Audio energy spike</span>
+                  <span class="reason-value">+28</span>
+                </div>
+                <div class="score-reason">
+                  <span class="reason-icon">💡</span>
+                  <span class="reason-text">Strong actionable insight</span>
+                  <span class="reason-value">+24</span>
+                </div>
+                <div class="score-reason">
+                  <span class="reason-icon">📖</span>
+                  <span class="reason-text">Story arc present</span>
+                  <span class="reason-value">+22</span>
+                </div>
+                <div class="score-reason">
+                  <span class="reason-icon">😮</span>
+                  <span class="reason-text">Surprise/contrast factor</span>
+                  <span class="reason-value">+18</span>
+                </div>
+              </div>
+              <div style="margin-top:14px;font-size:11px;color:var(--text3);background:var(--bg2);border-radius:var(--r3);padding:10px;line-height:1.6">
+                💬 <span id="aiExplanation">"Strong storytelling arc with emotional peak + actionable takeaway. High pause-and-rewatch potential for Indian students audience."</span>
+              </div>
+            </div>
+
+            <!-- PLATFORM CAPTIONS -->
+            <div class="score-panel fade-in-d1" style="margin-top:14px">
+              <div class="section-title" style="margin-bottom:10px">📝 AI-Generated Captions</div>
+              <div class="platform-tabs">
+                <div class="platform-tab active" onclick="switchPlatform(this,'instagram')">📸 Reels</div>
+                <div class="platform-tab" onclick="switchPlatform(this,'linkedin')">💼 LinkedIn</div>
+                <div class="platform-tab" onclick="switchPlatform(this,'youtube')">▶️ Shorts</div>
+              </div>
+              <div id="captionPreviewArea">
+                <div class="caption-preview">
+                  <div class="caption-hook" id="captionHook">Nobody told me this in college — and it cost me 2 years 😤</div>
+                  <div style="margin:8px 0;font-size:12px;color:var(--text2)" id="captionBody">This mentor breaks down the exact framework that got 100+ students into FAANG in just 90 days. The answer isn't grinding LeetCode — it's this...</div>
+                  <div class="hashtags" id="captionHashtags">#CareerGrowth #PlacementPrep #StudentLife #UnsaidTalks #Mentorship #TechCareer</div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+                  <span class="caption-mode-badge cm-hook">⚡ Hook-first</span>
+                  <span class="caption-mode-badge cm-insight">💡 Insight</span>
+                </div>
+                <button class="btn btn-ghost" style="width:100%;font-size:12px;margin-top:4px" onclick="regenCaption()">↺ Regenerate Caption</button>
+              </div>
+            </div>
+
+            <!-- MOBILE PREVIEW -->
+            <div class="score-panel fade-in-d2" style="margin-top:14px">
+              <div class="section-header" style="margin-bottom:14px">
+                <div class="section-title">📱 Phone Preview</div>
+                <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="showPage('preview')">Full View</button>
+              </div>
+              <div class="phone-frame">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                  <div class="phone-video-area">
+                    <div class="phone-hook" id="phoneHook">Nobody told me this in college...</div>
+                    <div class="phone-speaker-area">
+                      <div class="phone-avatar">🎤</div>
+                      <div style="font-size:9px;color:var(--text2)">@mentor_unsaid</div>
+                    </div>
+                    <div class="phone-caption" id="phoneCaption">The framework that changed everything</div>
+                  </div>
+                  <div class="phone-ui-bar">
+                    <span class="phone-btn">🏠</span>
+                    <span class="phone-btn">🔍</span>
+                    <span class="phone-btn">➕</span>
+                    <span class="phone-btn">❤️</span>
+                    <span class="phone-btn">👤</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ HIGHLIGHT REEL PAGE ============ -->
+    <div class="page" id="page-reel">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">✨ Magic Highlight Reel</div>
+          <span class="topbar-sub">Stitch top clips into one 60–90s vertical video with transitions</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="showPage('results')">← Back</button>
+          <button class="btn btn-primary" onclick="showToast('🎬 Rendering highlight reel... this would take ~2min in production','gold')">🎞️ Generate Reel</button>
+        </div>
+      </div>
+      <div class="content-area">
+        <div class="reel-card fade-in">
+          <div class="section-header">
+            <div class="section-title">🎞️ Reel Composer <span class="section-badge badge-purple">7 clips selected</span></div>
+            <div style="font-size:12px;color:var(--text3)">Total: 1:22 min</div>
+          </div>
+          <div class="reel-preview" id="reelPreview">
+            <div style="text-align:center;z-index:2">
+              <div style="font-size:42px;margin-bottom:8px">▶</div>
+              <div style="font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--text2)">Preview Highlight Reel</div>
+            </div>
+            <div class="reel-clips-strip" id="reelStrip"></div>
+          </div>
+          <div style="margin:16px 0">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Clip Order (drag to reorder)</div>
+            <div id="reelClipsList" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+
+        <div class="config-card fade-in-d1">
+          <h4>🎨 Reel Style</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="config-row"><span class="config-label">Transition</span>
+              <select class="select-input"><option>Smooth Fade</option><option>Swipe</option><option>Cut</option><option>Zoom</option></select>
+            </div>
+            <div class="config-row"><span class="config-label">Music</span>
+              <select class="select-input"><option>Motivational</option><option>Lo-fi Study</option><option>None</option></select>
+            </div>
+            <div class="config-row"><span class="config-label">Intro Card</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider-sw"></span></label>
+            </div>
+            <div class="config-row"><span class="config-label">Outro CTA</span>
+              <label class="switch"><input type="checkbox" checked><span class="slider-sw"></span></label>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding:12px;background:var(--bg2);border-radius:var(--r3)">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">AI-Generated Outro Text</div>
+            <div style="font-size:13px;color:var(--text)">🔑 Key Takeaway: <em style="color:var(--gold)">"The best time to start was yesterday. The second best time is right now."</em></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ EXPORT PAGE ============ -->
+    <div class="page" id="page-export">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">📦 Creator Export Pack</div>
+          <span class="topbar-sub">Ready-to-post assets — one click, everything you need</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="showPage('results')">← Back</button>
+          <button class="btn btn-primary" onclick="showToast('📦 Packaging all assets... Download starting!','gold')">⬇️ Download All (.zip)</button>
+        </div>
+      </div>
+      <div class="content-area">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="config-card fade-in">
+            <h4>📹 Video Clips</h4>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:12px">8 vertical clips with captions baked in</div>
+            <div style="display:flex;flex-direction:column;gap:6px" id="exportClipList"></div>
+          </div>
+          <div class="config-card fade-in-d1">
+            <h4>🖼️ Thumbnails</h4>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Auto-generated with text overlays</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px" id="thumbGrid"></div>
+          </div>
+          <div class="config-card fade-in-d2">
+            <h4>📝 Caption Pack</h4>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Platform-specific hooks + hashtags</div>
+            <div style="display:flex;flex-direction:column;gap:8px" id="captionPackList"></div>
+          </div>
+          <div class="config-card fade-in-d3">
+            <h4>📊 Analytics Preview</h4>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Predicted performance metrics</div>
+            <div style="display:flex;flex-direction:column;gap:10px" id="analyticsList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MOBILE PREVIEW PAGE ============ -->
+    <div class="page" id="page-preview">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">📱 Mobile Preview Simulator</div>
+          <span class="topbar-sub">See how your clips will look on TikTok & Instagram Reels</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" onclick="showPage('results')">← Back</button>
+        </div>
+      </div>
+      <div class="content-area" style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="text-align:center;margin-bottom:16px;font-size:12px;color:var(--text3)">TikTok / Reels</div>
+          <div class="phone-frame" style="width:220px;margin:0 auto">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-video-area" style="padding-top:30px">
+                <div style="font-family:var(--font-display);font-size:14px;font-weight:800;text-align:center;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.9);line-height:1.3" id="preview1-hook">Nobody told me this in college — it cost me 2 years</div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+                  <div style="width:60px;height:60px;border-radius:50%;background:var(--bg3);border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:26px">🎤</div>
+                  <div style="font-size:10px;color:var(--text2)">@mentor_unsaid · 1.2K followers</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.85);color:#fff;width:100%;padding:7px 8px;text-align:center;font-size:9px;font-weight:700;border-top:2px solid var(--gold)" id="preview1-caption">The framework that changed everything ✨</div>
+              </div>
+              <div class="phone-ui-bar">
+                <span class="phone-btn" style="font-size:14px">🏠</span>
+                <span class="phone-btn" style="font-size:14px">🔍</span>
+                <span class="phone-btn" style="font-size:14px">➕</span>
+                <span class="phone-btn" style="font-size:14px">❤️</span>
+                <span class="phone-btn" style="font-size:14px">👤</span>
+              </div>
+            </div>
+          </div>
+          <!-- Clip switcher -->
+          <div style="display:flex;justify-content:center;gap:6px;margin-top:14px;flex-wrap:wrap" id="phoneClipSwitcher"></div>
+        </div>
+
+        <div style="flex:2;min-width:300px">
+          <div class="config-card fade-in">
+            <h4>🎬 Currently Previewing</h4>
+            <div id="previewClipInfo" style="font-size:13px;color:var(--text2);margin-bottom:12px"></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" style="flex:1" onclick="prevClip()">← Prev</button>
+              <button class="btn btn-primary" style="flex:1" onclick="nextClip()">Next →</button>
+            </div>
+          </div>
+          <div class="config-card fade-in-d1" style="margin-top:14px">
+            <h4>✏️ Customize This Clip</h4>
+            <div style="margin-bottom:12px">
+              <div class="config-label" style="margin-bottom:6px">Hook Text</div>
+              <input id="customHook" type="text" value="Nobody told me this in college — it cost me 2 years"
+                style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--r3);font-size:12px;font-family:var(--font-body);outline:none;"
+                oninput="updateHook(this.value)">
+            </div>
+            <div>
+              <div class="config-label" style="margin-bottom:6px">Caption Bar</div>
+              <input id="customCaption" type="text" value="The framework that changed everything ✨"
+                style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--r3);font-size:12px;font-family:var(--font-body);outline:none;"
+                oninput="updateCaption(this.value)">
+            </div>
+            <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="showToast('✅ Clip updated!','success')">Apply Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ HISTORY PAGE ============ -->
+    <div class="page" id="page-history">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">📂 Project History</div>
+          <span class="topbar-sub">Your previous video analyses</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="showPage('upload')">+ New Project</button>
+        </div>
+      </div>
+      <div class="content-area">
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- PROCESSING OVERLAY -->
+<div class="processing-overlay" id="processingOverlay">
+  <div class="processing-logo">⚡ AttentionX</div>
+  <div class="processing-msg" id="processingMsg">Analyzing your video...</div>
+  <div class="processing-funny" id="processingFunny">Finding the wisdom...</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="processing-steps">
+    <div class="proc-step" id="step0"><div class="step-dot"></div>Extracting audio & transcript</div>
+    <div class="proc-step" id="step1"><div class="step-dot"></div>Analyzing emotional peaks with Librosa</div>
+    <div class="proc-step" id="step2"><div class="step-dot"></div>Running sentiment analysis on transcript</div>
+    <div class="proc-step" id="step3"><div class="step-dot"></div>Scoring virality with Gemini</div>
+    <div class="proc-step" id="step4"><div class="step-dot"></div>Smart-cropping to 9:16 with MediaPipe</div>
+    <div class="proc-step" id="step5"><div class="step-dot"></div>Generating dynamic captions</div>
+    <div class="proc-step" id="step6"><div class="step-dot"></div>Creating platform-specific hooks</div>
+    <div class="proc-step" id="step7"><div class="step-dot"></div>Packaging your golden nuggets</div>
+  </div>
+</div>
+
+<!-- CLIP DETAIL MODAL -->
+<div class="modal-overlay" id="clipModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Clip Details</div>
+      <button class="modal-close" onclick="closeModal()">✕ Close</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ============ DATA ============
+  const CLIPS_DATA = [
+    { id:1, score:92, time:'08:24', duration:'1:04', title:'The one framework nobody teaches you in college', hook:'Nobody told me this in college — it cost me 2 years 😤', caption:'The framework that changed everything ✨', emotion:'🔥 Passion', sentiment:'insight', bg:'linear-gradient(180deg,#1a0a2e,#0a0f1a)', emoji:'🎓' },
+    { id:2, score:87, time:'15:12', duration:'0:48', title:'Why most students fail interviews (the real reason)', hook:'Stop grinding LeetCode the wrong way ❌', caption:'Here\'s what actually works...', emotion:'😮 Surprise', sentiment:'insight', bg:'linear-gradient(180deg,#0a1a2e,#0f0a1a)', emoji:'💡' },
+    { id:3, score:84, time:'23:45', duration:'0:57', title:'I failed 3 interviews before cracking this', hook:'My 3 biggest interview failures 💀', caption:'What I learned from each one', emotion:'📖 Story', sentiment:'emotional', bg:'linear-gradient(180deg,#1a0f0a,#0a0f0a)', emoji:'💪' },
+    { id:4, score:79, time:'31:20', duration:'0:42', title:'The Google engineer who changed my perspective', hook:'A Google engineer told me something shocking...', caption:'Changed how I prep forever', emotion:'💡 Insight', sentiment:'insight', bg:'linear-gradient(180deg,#0a1a0f,#0a0f1a)', emoji:'🚀' },
+    { id:5, score:76, time:'36:08', duration:'0:53', title:'Building your network before you need it', hook:'Most people network too late ⏰', caption:'Start before placement season', emotion:'📖 Story', sentiment:'advice', bg:'linear-gradient(180deg,#1a1a0a,#0f0a1a)', emoji:'🤝' },
+    { id:6, score:73, time:'41:15', duration:'0:38', title:'DSA is just 20% of the battle — the hidden 80%', hook:'DSA is NOT enough and nobody tells you 😤', caption:'The hidden 80% that actually matters', emotion:'🔥 Passion', sentiment:'insight', bg:'linear-gradient(180deg,#1a0a1a,#0a1a0f)', emoji:'📊' },
+    { id:7, score:71, time:'44:02', duration:'0:45', title:'The 90-day plan to crack any FAANG role', hook:'90 days is all you need 🎯', caption:'The exact roadmap nobody shares', emotion:'💡 Insight', sentiment:'advice', bg:'linear-gradient(180deg,#0a0f1a,#1a0a0f)', emoji:'📅' },
+    { id:8, score:68, time:'46:58', duration:'0:31', title:'Your network is your net worth', hook:'Your network IS your net worth 💎', caption:'Build it starting today', emotion:'📖 Story', sentiment:'motivation', bg:'linear-gradient(180deg,#0f1a0a,#1a0f0a)', emoji:'💎' },
+  ];
+
+  const PLATFORMS = {
+    instagram: {
+      hook: 'Nobody told me this in college — and it cost me 2 years 😤',
+      body: 'This mentor breaks down the exact framework that got 100+ students into FAANG in just 90 days. The answer isn\'t grinding LeetCode — it\'s this...',
+      tags: '#CareerGrowth #PlacementPrep #StudentLife #UnsaidTalks #Mentorship #TechCareer'
+    },
+    linkedin: {
+      hook: 'After mentoring 100+ students, here\'s what separates the ones who crack FAANG from those who don\'t:',
+      body: 'It\'s not about how many LeetCode problems you solve. It\'s about understanding the problem-solving framework — and this session breaks it down in 60 seconds.',
+      tags: '#CareerAdvice #SoftwareEngineering #InterviewPrep #Hiring #TechJobs'
+    },
+    youtube: {
+      hook: 'The REAL reason you\'re failing coding interviews (it\'s not what you think)',
+      body: 'This mentor\'s 90-day framework has helped 100+ students crack roles at Google, Amazon & Microsoft. Watch till the end for the one mindset shift that changes everything.',
+      tags: '#CodingInterview #FAANG #Placement2025 #DSA #LeetCode #TechPrep'
+    }
+  };
+
+  const HISTORY_DATA = [
+    { id:1, title:'UnsaidTalks Mentorship Session #1', date:'Apr 18, 2026', clips:8, duration:'47:32', emoji:'🎓' },
+    { id:2, title:'Google Engineer AMA — Career Advice', date:'Apr 15, 2026', clips:12, duration:'1:23:04', emoji:'🚀' },
+    { id:3, title:'Mock Interview Workshop — System Design', date:'Apr 10, 2026', clips:6, duration:'58:14', emoji:'💼' },
+    { id:4, title:'DSA Bootcamp Day 3 — DP & Graphs', date:'Apr 5, 2026', clips:9, duration:'1:12:30', emoji:'💡' },
+  ];
+
+  let selectedClipId = 1;
+  let currentPreviewClip = 0;
+  let currentPlatform = 'instagram';
+
+  // ============ NAVIGATION ============
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navMap = {upload:'upload',results:'results',history:'history',reel:'reel',export:'export',preview:'preview'};
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+      const txt = item.textContent.trim().toLowerCase();
+      if ((id==='upload' && txt.includes('new video')) ||
+          (id==='results' && txt.includes('results')) ||
+          (id==='history' && txt.includes('history')) ||
+          (id==='reel' && txt.includes('reel')) ||
+          (id==='export' && txt.includes('export')) ||
+          (id==='preview' && txt.includes('mobile'))) {
+        item.classList.add('active');
+      }
+    });
+    if (id === 'export') populateExport();
+    if (id === 'history') populateHistory();
+    if (id === 'preview') populatePreview();
+    if (id === 'reel') populateReel();
+  }
+
+  // ============ UPLOAD ============
+  function triggerUpload() { document.getElementById('fileInput').click(); }
+  function handleFileSelect(input) {
+    if (input.files[0]) {
+      document.querySelector('.upload-title').textContent = '✅ ' + input.files[0].name;
+      document.querySelector('.upload-sub').textContent = 'Ready to analyze!';
+      showToast('📁 Video loaded: ' + input.files[0].name, 'success');
+    }
+  }
+  function handleDrag(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('dragover'); }
+  function handleDragLeave(e) { document.getElementById('uploadZone').classList.remove('dragover'); }
+  function handleDrop(e) {
+    e.preventDefault(); document.getElementById('uploadZone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) { document.querySelector('.upload-title').textContent = '✅ ' + file.name; showToast('📁 Video dropped: ' + file.name, 'success'); }
+  }
+  function loadDemo() {
+    document.getElementById('ytUrl').value = 'https://youtube.com/watch?v=demo-unsaidtalks-session-1';
+    showToast('🎬 Demo video loaded! Click Analyze.', 'gold');
+    document.querySelector('.upload-title').textContent = '✅ UnsaidTalks Mentorship Session';
+    document.querySelector('.upload-sub').textContent = '47:32 · Ready to analyze!';
+  }
+  function selectAudience(el) {
+    document.querySelectorAll('.audience-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    showToast('🎯 Audience: ' + el.querySelector('.aud-name').textContent, '');
+  }
+
+  // ============ PROCESSING ============
+  const funnyMessages = [
+    ['Extracting audio...', 'Waking up the AI... 🤖'],
+    ['Detecting emotional peaks...', 'Finding the wisdom... 🔥'],
+    ['Running sentiment analysis...', 'This part is pure gold! ✨'],
+    ['Scoring virality...', 'Gemini is taking notes 📝'],
+    ['Smart cropping to 9:16...', 'Keeping your speaker centered 🎯'],
+    ['Generating captions...', 'Writing hooks that STOP the scroll ⚡'],
+    ['Tailoring for your audience...', 'India-specific magic happening 🇮🇳'],
+    ['Packaging nuggets...', 'Almost there! Your content awaits 🏅'],
+  ];
+
+async function startProcessing() {
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Upload a file first!");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  document.getElementById("processingOverlay").classList.add("show");
+
+  // 🔥 AI thinking messages
+  const messages = [
+    "🔍 Finding golden nuggets...",
+    "🧠 Analyzing emotional peaks...",
+    "🔥 Detecting viral moments...",
+    "✨ Crafting scroll-stopping hooks..."
+  ];
+
+  let i = 0;
+  const interval = setInterval(() => {
+    document.getElementById("processingMsg").innerText = messages[i];
+    i = (i + 1) % messages.length;
+  }, 1200);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/analyze", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    console.log(data);
+
+    clearInterval(interval);
+
+    updateResultsUI(data.results);
+
+    document.getElementById("processingOverlay").classList.remove("show");
+
+    showPage("results");
+
+  } catch (err) {
+    clearInterval(interval);
+    console.error(err);
+    alert("Error processing video");
+  }
+}
+function updateResultsUI(results) {
+  const container = document.getElementById("clipsGrid");
+  container.innerHTML = "";
+
+  results.forEach((item, index) => {
+    const score = item.score.score || 80;
+
+    const div = document.createElement("div");
+    div.className = "clip-card fade-in";
+
+    div.innerHTML = `
+      <div class="clip-thumb">
+        <div class="clip-preview-content">
+          <div class="clip-hook-text">${item.caption.hook}</div>
+          <div class="clip-speaker">🎤</div>
+          <div class="clip-caption-bar">${item.caption.caption}</div>
+        </div>
+
+        <div class="clip-score">
+          ⭐ <span class="clip-score-val">${score}</span>
+        </div>
+
+        <div class="clip-duration">0:${15 + index * 5}</div>
+      </div>
+
+      <div class="clip-info">
+        <div class="clip-title">${item.text}</div>
+        <div class="clip-meta">
+          <span>🔥 ${item.score.label}</span>
+          <span>📊 Viral Potential</span>
+        </div>
+
+        <!-- 🔥 GOLDEN SCORE BAR -->
+        <div style="margin-top:8px;">
+          <div style="background:#222;border-radius:6px;height:6px;overflow:hidden;">
+            <div style="
+              width:${score}%;
+              background:linear-gradient(90deg,#00f5a0,#00d9f5);
+              height:100%;
+              transition:width 1s ease;
+            "></div>
+          </div>
+        </div>
+      </div>
+       <details style="margin-top:8px;">
+    <summary style="cursor:pointer;color:#00d9f5;font-weight:600;font-size:12px;">
+     🧠 Why this will go viral
+    </summary>
+    <ul style="margin-top:6px;font-size:11px;color:#aaa;">
+      ${(item.score.reasons || [
+        "Strong emotional hook",
+        "Relatable insight",
+        "High engagement potential"
+      ]).map(r => `<li>${r}</li>`).join("")}
+    </ul>
+  </details>
+
+</div>
+
+      <div class="clip-actions">
+        <button class="clip-action-btn primary">Use Clip</button>
+        <button class="clip-action-btn secondary">Preview</button>
+      </div>
+    `;
+   
+
+    container.appendChild(div);
+  });
+
+  // update count badge
+  document.getElementById("nav-clips-count").style.display = "inline-block";
+  document.getElementById("nav-clips-count").innerText = results.length;
+}
+  // ============ RESULTS ============
+  function generateResults() {
+    buildWaveform();
+    buildClipsGrid();
+    updateScorePanel(CLIPS_DATA[0]);
+    document.getElementById('nav-clips-count').style.display = '';
+    document.getElementById('nav-clips-count').textContent = CLIPS_DATA.length;
+  }
+
+  function buildWaveform() {
+    const bars = document.getElementById('waveformBars');
+    bars.innerHTML = '';
+    const total = 120;
+    const peaks = [20,21,22,38,39,57,58,74,75,76,97,98,111,112];
+    const selected = [57,58];
+    for (let i=0; i<total; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'waveform-bar' + (peaks.includes(i)?' peak':'') + (selected.includes(i)?' selected':'');
+      const h = peaks.includes(i) ? (50 + Math.random()*40) : (10 + Math.random()*30);
+      bar.style.height = h + 'px';
+      bar.onclick = (function(idx){ return function(){ selectWaveformBar(idx); }; })(i);
+      bars.appendChild(bar);
+    }
+  }
+
+  function selectWaveformBar(idx) {
+    const clipIdx = Math.floor(idx / 15);
+    if (clipIdx < CLIPS_DATA.length) {
+      selectClip(CLIPS_DATA[clipIdx].id);
+    }
+  }
+
+  function buildClipsGrid() {
+    const grid = document.getElementById('clipsGrid');
+    grid.innerHTML = '';
+    CLIPS_DATA.forEach((clip, i) => {
+      grid.innerHTML += `
+      <div class="clip-card ${i===0?'selected':''}" onclick="selectClip(${clip.id})" style="animation-delay:${i*0.05}s" id="clip-${clip.id}">
+        <div class="clip-thumb">
+          <div class="clip-preview-content" style="background:${clip.bg}">
+            <div class="clip-hook-text">${clip.hook.substring(0,50)}...</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div class="clip-speaker">${clip.emoji}</div>
+            </div>
+            <div class="clip-caption-bar">${clip.caption.substring(0,40)}</div>
+          </div>
+          <div class="clip-score">⭐<span class="clip-score-val">${clip.score}</span></div>
+          <div class="clip-duration">${clip.duration}</div>
+        </div>
+        <div class="clip-info">
+          <div class="clip-title">${clip.title}</div>
+          <div class="clip-meta"><span>${clip.emotion}</span><span>@${clip.time}</span></div>
+        </div>
+        <div class="clip-actions">
+          <button class="clip-action-btn primary" onclick="event.stopPropagation();openClipModal(${clip.id})">Details</button>
+          <button class="clip-action-btn secondary" onclick="event.stopPropagation();showToast('⬇️ Downloading clip ${i+1}...','gold')">Export</button>
+        </div>
+      </div>`;
+    });
+  }
+
+  function selectClip(id) {
+    selectedClipId = id;
+    document.querySelectorAll('.clip-card').forEach(c => c.classList.remove('selected'));
+    const clipEl = document.getElementById('clip-'+id);
+    if (clipEl) clipEl.classList.add('selected');
+    const clip = CLIPS_DATA.find(c => c.id === id);
+    updateScorePanel(clip);
+    updatePhonePreview(clip);
+  }
+
+  function updateScorePanel(clip) {
+    document.getElementById('selectedScore').textContent = clip.score;
+    document.getElementById('scoreBar').style.width = clip.score + '%';
+    const labels = {92:'🔥 Viral Potential: Exceptional',87:'🔥 Viral Potential: Very High',84:'✨ Viral Potential: High',79:'📈 Viral Potential: Strong',76:'📈 Viral Potential: Good',73:'👍 Viral Potential: Solid',71:'👍 Viral Potential: Solid',68:'📊 Viral Potential: Moderate'};
+    document.getElementById('scoreLabel').textContent = labels[clip.score] || '📊 Viral Potential: Moderate';
+    const exp = {92:'"Strong storytelling arc with emotional peak + actionable takeaway. High pause-and-rewatch potential for Indian students."',87:'"Surprising insight that challenges common advice. Strong stop-the-scroll factor for career-focused audience."',84:'"Personal failure story creates authentic connection. Highly relatable for students facing rejection."',79:'"Expert authority + specific outcome. LinkedIn/professional audience will share widely."',76:'"Practical advice with urgency. Instagram Reels engagement will be above average."',73:'"Myth-busting content with strong opinion. High comment-driver for debate-worthy takes."',71:'"Actionable roadmap content. Pinterest-worthy saves and bookmarks expected."',68:'"Inspirational quote format. Lower viral ceiling but strong save rate."'};
+    document.getElementById('aiExplanation').textContent = exp[clip.score] || '"Good clip with strong viral potential."';
+    const reasons = document.getElementById('scoreReasons');
+    const emotionScore = clip.emotion.includes('🔥')?28:clip.emotion.includes('😮')?22:clip.emotion.includes('💡')?24:18;
+    reasons.innerHTML = `
+      <div class="score-reason"><span class="reason-icon">🎤</span><span class="reason-text">Audio energy level</span><span class="reason-value">+${emotionScore}</span></div>
+      <div class="score-reason"><span class="reason-icon">💡</span><span class="reason-text">Content insight score</span><span class="reason-value">+${Math.floor(clip.score*0.26)}</span></div>
+      <div class="score-reason"><span class="reason-icon">📖</span><span class="reason-text">Story arc & retention</span><span class="reason-value">+${Math.floor(clip.score*0.24)}</span></div>
+      <div class="score-reason"><span class="reason-icon">🎯</span><span class="reason-text">Hook strength</span><span class="reason-value">+${Math.floor(clip.score*0.22)}</span></div>`;
+  }
+
+  function updatePhonePreview(clip) {
+    document.getElementById('phoneHook').textContent = clip.hook.substring(0,50) + '...';
+    document.getElementById('phoneCaption').textContent = clip.caption.substring(0,40);
+  }
+
+  function sortClips(by) {
+    showToast('↕️ Sorting by ' + by, '');
+  }
+
+  
+  function switchPlatform(tab, platform) {
+    document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentPlatform = platform;
+    const p = PLATFORMS[platform];
+    document.getElementById('captionHook').textContent = p.hook;
+    document.getElementById('captionBody').textContent = p.body;
+    document.getElementById('captionHashtags').textContent = p.tags;
+  }
+
+  function regenCaption() {
+    showToast('✨ Regenerating caption with Gemini...', 'gold');
+    setTimeout(() => {
+      const hooks = [
+        'This is the advice your college professors never gave you 🎓',
+        'I wish someone told me this before my first interview 💡',
+        'The secret that top 1% candidates know (and others don\'t) ⚡',
+      ];
+      document.getElementById('captionHook').textContent = hooks[Math.floor(Math.random()*hooks.length)];
+      showToast('✅ New caption generated!', 'success');
+    }, 1000);
+  }
+
+  function openClipModal(id) {
+    const clip = CLIPS_DATA.find(c => c.id === id);
+    document.getElementById('modalTitle').textContent = '✨ ' + clip.title;
+    document.getElementById('modalBody').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Golden Nugget Score</div>
+          <div style="font-family:var(--font-display);font-size:36px;font-weight:800;color:var(--gold)">${clip.score}<span style="font-size:16px;color:var(--text3)">/100</span></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Details</div>
+          <div style="font-size:12px;color:var(--text2)">⏱️ ${clip.duration} &nbsp; 🕐 @${clip.time}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">${clip.emotion}</div>
+        </div>
+      </div>
+      <div style="background:var(--bg2);border-radius:var(--r);padding:14px;margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Hook Text</div>
+        <div style="font-family:var(--font-display);font-size:15px;font-weight:700">${clip.hook}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Caption Bar</div>
+      <div style="background:var(--bg2);border-radius:var(--r);padding:10px;margin-bottom:14px;font-size:13px;font-weight:600;border-left:3px solid var(--gold)">${clip.caption}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Regenerate with different mood:</div>
+      <div class="regen-area">
+        <input class="regen-input" placeholder="e.g. Make this more motivational, more professional..." id="regenInput">
+        <button class="btn btn-primary" style="padding:6px 14px;font-size:12px" onclick="regenClip()">↺ Regen</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary" style="flex:1" onclick="showToast('⬇️ Exporting clip...','gold');closeModal()">⬇️ Export Clip</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="showToast('📋 Copied caption!','success');closeModal()">📋 Copy Caption</button>
+      </div>`;
+    document.getElementById('clipModal').classList.add('show');
+  }
+
+  function closeModal() { document.getElementById('clipModal').classList.remove('show'); }
+  function regenClip() {
+    const v = document.getElementById('regenInput').value;
+    showToast('✨ Regenerating: "' + (v||'default mood') + '"', 'gold');
+    closeModal();
+  }
+
+  // ============ EXPORT PAGE ============
+  function populateExport() {
+    // Clip list
+    document.getElementById('exportClipList').innerHTML = CLIPS_DATA.slice(0,5).map((c,i) => `
+      <div class="export-item">
+        <span class="export-icon">${c.emoji}</span>
+        <div><div class="export-name">clip_${String(i+1).padStart(2,'0')}_${c.score}pts.mp4</div><div class="export-desc">9:16 · ${c.duration} · Captions baked</div></div>
+        <button onclick="showToast('⬇️ Downloading...','gold')" class="btn btn-ghost" style="padding:4px 10px;font-size:11px">↓</button>
+      </div>`).join('');
+    // Thumbnails
+    document.getElementById('thumbGrid').innerHTML = CLIPS_DATA.slice(0,8).map(c => `
+      <div style="aspect-ratio:9/16;background:${c.bg};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;border:1px solid var(--border)" onclick="showToast('🖼️ Thumbnail saved!','success')" title="Click to save">${c.emoji}</div>`).join('');
+    // Caption pack
+    document.getElementById('captionPackList').innerHTML = ['📸 Instagram Reels','💼 LinkedIn','▶️ YouTube Shorts','🎵 TikTok'].map((p,i) => `
+      <div class="export-item">
+        <span class="export-icon">${['📸','💼','▶️','🎵'][i]}</span>
+        <div><div class="export-name">${p}</div><div class="export-desc">8 captions + hashtags</div></div>
+        <button onclick="showToast('📋 Copied!','success')" class="btn btn-ghost" style="padding:4px 10px;font-size:11px">Copy</button>
+      </div>`).join('');
+    // Analytics
+    document.getElementById('analyticsList').innerHTML = [
+      ['📈 Est. Avg Views','2.4K–8.1K'],['❤️ Engagement Rate','4.2%–7.8%'],['🔖 Save Rate','High'],['💬 Comment Driver','Myth-busting content'],
+    ].map(([k,v]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">${k}</span><span style="color:var(--text);font-weight:600">${v}</span></div>`).join('');
+  }
+
+  function populateHistory() {
+    document.getElementById('historyList').innerHTML = HISTORY_DATA.map(h => `
+      <div class="history-item" onclick="showToast('📂 Loading ${h.title}...','gold')">
+        <div class="history-thumb">${h.emoji}</div>
+        <div class="history-info">
+          <div class="history-title">${h.title}</div>
+          <div class="history-meta"><span>${h.date}</span><span>⏱️ ${h.duration}</span><span>✨ ${h.clips} clips</span></div>
+        </div>
+        <div class="history-actions">
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="event.stopPropagation();showPage('results')">View</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="event.stopPropagation();showToast('📦 Downloading...','gold')">Export</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // ============ PREVIEW PAGE ============
+  function populatePreview() {
+    const switcher = document.getElementById('phoneClipSwitcher');
+    switcher.innerHTML = CLIPS_DATA.map((c,i) => `
+      <div onclick="previewClipAt(${i})" style="width:32px;height:32px;border-radius:6px;background:${i===currentPreviewClip?'var(--gold-dim)':'var(--bg3)'};border:1px solid ${i===currentPreviewClip?'rgba(245,200,66,0.4)':'var(--border)'};display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all 0.2s">${c.emoji}</div>`).join('');
+    updatePreviewDisplay();
+  }
+
+  function previewClipAt(i) {
+    currentPreviewClip = i;
+    populatePreview();
+    updatePreviewDisplay();
+  }
+  function prevClip() { currentPreviewClip = Math.max(0, currentPreviewClip-1); populatePreview(); }
+  function nextClip() { currentPreviewClip = Math.min(CLIPS_DATA.length-1, currentPreviewClip+1); populatePreview(); }
+  function updatePreviewDisplay() {
+    const clip = CLIPS_DATA[currentPreviewClip];
+    document.getElementById('preview1-hook').textContent = clip.hook;
+    document.getElementById('preview1-caption').textContent = clip.caption + ' ✨';
+    document.getElementById('customHook').value = clip.hook;
+    document.getElementById('customCaption').value = clip.caption;
+    document.getElementById('previewClipInfo').textContent = `Clip ${currentPreviewClip+1} of ${CLIPS_DATA.length} · Score: ${clip.score}/100 · ${clip.duration}`;
+  }
+  function updateHook(v) { document.getElementById('preview1-hook').textContent = v; }
+  function updateCaption(v) { document.getElementById('preview1-caption').textContent = v; }
+
+  // ============ REEL PAGE ============
+  function populateReel() {
+    const top7 = CLIPS_DATA.slice(0,7);
+    document.getElementById('reelStrip').innerHTML = top7.map((c,i) => `
+      <div class="reel-clip-thumb ${i===0?'active':''}" onclick="reelSelectClip(${i})" style="background:${c.bg}">${c.emoji}</div>`).join('');
+    document.getElementById('reelClipsList').innerHTML = top7.map((c,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);cursor:grab">
+        <span style="color:var(--text3);font-size:12px;width:16px">${i+1}</span>
+        <span>${c.emoji}</span>
+        <span style="flex:1;font-size:12px;color:var(--text)">${c.title.substring(0,45)}...</span>
+        <span style="font-size:11px;color:var(--text3)">${c.duration}</span>
+        <span style="font-size:11px;color:var(--gold)">⭐${c.score}</span>
+      </div>`).join('');
+  }
+  function reelSelectClip(i) {
+    document.querySelectorAll('.reel-clip-thumb').forEach((t,j) => t.classList.toggle('active',j===i));
+  }
+
+  // ============ TOAST ============
+  function showToast(msg, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.innerHTML = msg;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 3000);
+  }
+
+  // ============ INIT ============
+  buildWaveform();
+  buildClipsGrid();
+  updateScorePanel(CLIPS_DATA[0]);
+</script>
+</body>
+</html>
